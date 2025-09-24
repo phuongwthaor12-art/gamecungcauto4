@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Game Cung - Cầu</title>
+  <style>
+    body { 
+      margin: 0;
+      font-family: Arial, sans-serif; 
+      text-align: center; 
+      /* Nền pastel nhiều màu pha trộn */
+      background: linear-gradient(135deg, #fbc2eb, #a6c1ee, #fdd6bd, #c2ffd8);
+      background-size: 400% 400%;
+      animation: gradientBG 15s ease infinite;
+      color: #333;
+    }
+    @keyframes gradientBG {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    #game { 
+      margin-top: 40px; 
+      background: rgba(255,255,255,0.7); 
+      padding: 30px; 
+      border-radius: 20px; 
+      display: inline-block;
+    }
+    .question { 
+      font-size: 36px; 
+      margin: 20px; 
+      font-weight: bold;
+    }
+    #options { 
+      display: flex; 
+      flex-wrap: wrap; 
+      justify-content: center; 
+      gap: 20px;
+      margin: 20px 0;
+    }
+    button { 
+      padding: 15px 30px; 
+      margin: 10px; 
+      border-radius: 15px; 
+      cursor: pointer; 
+      border: none; 
+      font-size: 22px; 
+      font-weight: bold;
+      background: linear-gradient(135deg, #ff9a9e, #fad0c4); 
+      color: #000;
+      transition: transform 0.2s;
+    }
+    button:hover { transform: scale(1.1); }
+    #feedback {
+      font-size: 26px;
+      margin-top: 20px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h1>🎮 Trò chơi Cung - Cầu</h1>
+  <div id="game">
+    <p class="question" id="question">Nhấn nút để bắt đầu!</p>
+    <div id="options"></div>
+    <button onclick="nextQuestion()">👉 Câu tiếp theo</button>
+    <p id="feedback"></p>
+  </div>
+
+  <!-- Âm thanh -->
+  <audio id="correctSound" src="https://www.myinstants.com/media/sounds/tuturu_1.mp3"></audio>
+  <audio id="wrongSound" src="https://www.myinstants.com/media/sounds/windows-error.mp3"></audio> 
+  <!-- Bạn có thể thay link trên bằng file "sai.mp3" để chạy offline -->
+
+  <!-- Thư viện confetti -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+
+  <script>
+    const events = [
+     { text: "📘 Khái niệm cung là gì?", options: ["Lượng hàng hóa người tiêu dùng muốn mua", "Lượng hàng hóa người sản xuất sẵn sàng bán ở mức giá nhất định", "Quan hệ giữa giá cả và thu nhập", "Tổng chi tiêu của chính phủ"], answer: "Lượng hàng hóa người sản xuất sẵn sàng bán ở mức giá nhất định" },
+     { text: "📘 Khái niệm cầu là gì?", options: ["Lượng hàng hóa người tiêu dùng sẵn sàng và có khả năng mua tại mức giá nhất định", "Lượng hàng hóa người sản xuất muốn bán", "Toàn bộ chi phí sản xuất", "Lợi nhuận của doanh nghiệp"], answer: "Lượng hàng hóa người tiêu dùng sẵn sàng và có khả năng mua tại mức giá nhất định" },
+     { text: "📘 Fan meeting của Lê Vy Thục San mở bán 500 vé, fan chen nhau mua hết sạch trong 5 phút. Đây là?", options: ["Cầu tăng mạnh", "Cầu giảm", "Cung tăng", "Cung dư thừa"], answer: "Cầu tăng mạnh" },
+     { text: "📘 Nhân tố nào KHÔNG ảnh hưởng trực tiếp đến cung?", options: ["Chi phí sản xuất", "Giá của hàng hóa đó", "Thị hiếu người tiêu dùng", "Trình độ công nghệ"], answer: "Thị hiếu người tiêu dùng" },
+     { text: "📘 Nhân tố nào KHÔNG ảnh hưởng trực tiếp đến cầu?", options: ["Thu nhập của người tiêu dùng", "Giá của hàng hóa đó", "Thị hiếu và sở thích", "Chi phí sản xuất của doanh nghiệp"], answer: "Chi phí sản xuất của doanh nghiệp" },
+     { text: "📘 Blackpink mở tour thế giới, lượng fan tranh vé online khổng lồ. Đây là?", options: ["Cầu tăng", "Cầu giảm", "Cung tăng", "Cung giảm"], answer: "Cầu tăng" },
+     { text: "📘 Khi giá hàng hóa tăng, cầu thường thay đổi thế nào (giả sử các yếu tố khác không đổi)?", options: ["Cầu tăng", "Cầu giảm", "Cung không đổi", "Cung giảm"], answer: "Cầu giảm" },
+     { text: "📘 Jack mở họp báo livestream , hàng trăm nghìn fan đổ vào xem cùng lúc khiến server lag. Đây là?", options: ["Cầu tăng ", "Cung tăng", "Cung giảm", "Cầu giảm"], answer: "Cầu tăng " },
+     { text: "📘 Khi giá hàng hóa tăng, cung thường thay đổi thế nào (giả sử các yếu tố khác không đổi)?", options: ["Cung tăng", "Cung giảm", "Cầu tăng", "Cầu giảm"], answer: "Cung tăng" },
+     { text: "📘 Mối quan hệ cơ bản giữa giá và lượng cầu là gì?", options: ["Thuận chiều", "Nghịch chiều", "Không quan hệ", "Thay đổi ngẫu nhiên"], answer: "Nghịch chiều" },
+     { text: "📘 Mối quan hệ cơ bản giữa giá và lượng cung là gì?", options: ["Thuận chiều", "Nghịch chiều", "Không quan hệ", "Thay đổi ngẫu nhiên"], answer: "Thuận chiều" },
+     { text: "🍺 Nhà máy bia lớn bảo trì dây chuyền, nguồn cung tạm thiếu ở một số vùng.", options: ["Cung giảm","Cầu tăng","Cung tăng","Cầu giảm"], answer: "Cung giảm" },
+     { text: "📘 Kungfu Panda hot đến mức một người như VirusS cũng xem đi xem lại nhiều lần. Điều này cho thấy?", options: ["Sức hút lớn của sản phẩm làm cầu duy trì", "Cung giảm mạnh", "Cầu biến mất", "Cung cố định không đổi"], answer: "Sức hút lớn của sản phẩm làm cầu duy trì" },
+     { text: "📘 Khi thu nhập của người tiêu dùng tăng (hàng hóa thông thường), cầu thường:", options: ["Giảm", "Tăng", "Không đổi", "Bằng 0"], answer: "Tăng" },
+     { text: "📘 Khi công nghệ sản xuất cải tiến, cung thường:", options: ["Tăng", "Giảm", "Không đổi", "Mất hẳn"], answer: "Tăng" },
+     { text: "🎶 Jack ra MV mới viral → fan thi nhau mua album, poster.", options: ["Cung giảm","Cầu tăng","Cung tăng","Cầu giảm"], answer: "Cầu tăng" },
+     { text: "📘 Khi giá hàng hóa thay thế (ví dụ: chè thay cà phê) tăng, cầu đối với cà phê thường:", options: ["Tăng", "Giảm", "Không đổi", "Bằng 0"], answer: "Tăng" },
+     { text: "📘 Fan meeting của Quốc Kang bán ra nhiều vé hơn dự kiến để đáp ứng lượng fan đông đảo. Đây là?", options: ["Cung tăng", "Cầu giảm", "Cung giảm", "Không đổi"], answer: "Cung tăng" },
+     { text: "📘 Khi giá hàng hóa bổ sung (ví dụ: xe máy và xăng) tăng, cầu đối với xe máy thường:", options: ["Tăng", "Giảm", "Không đổi", "Bằng 0"], answer: "Giảm" },
+     { text: "📈 Vàng tăng giá khi USD suy yếu — người dân đổ xô mua tích trữ.", options: ["Cung giảm","Cầu tăng","Cung tăng","Cầu giảm"], answer: "Cầu tăng" },
+     { text: "💳 Thanh toán không tiền mặt khuyến khích: ví điện tử chạy quảng bá, giao dịch tăng — cửa hàng nhập thêm POS.", options: ["Cung giảm","Cầu tăng","Cung tăng","Cầu giảm"], answer: "Cầu tăng" },
+     { text: "🛠️ Giá thép giảm do nguồn nhập tăng rẻ hơn từ nước ngoài — nhà thầu hoãn mua đợt trước.", options: ["Cung giảm","Cầu tăng","Cung tăng","Cầu giảm"], answer: "Cung tăng" },
+     { text: "🏞️ Các điểm du lịch mới nổi trên mạng xã hội, tour local full chỗ cuối tuần.", options: ["Cung giảm","Cầu tăng","Cung tăng","Cầu giảm"], answer: "Cầu tăng" },
+     { text: "🥩 Thịt bò nhập khẩu áp thuế giảm — siêu thị nhập khẩu ồ ạt, hàng hoá trong nước đối mặt cạnh tranh.", options: ["Cung giảm","Cầu tăng","Cung tăng","Cầu giảm"], answer: "Cung tăng" },
+     { text: "🛰️ Thiết bị viễn thông 5G khan nguồn do đơn hàng từ nhiều nước — nhà mạng chậm triển khai tại một số vùng.", options: ["Cung giảm","Cầu tăng","Cung tăng","Cầu giảm"], answer: "Cung giảm" },
+     { text: "📘 Một đại gia muốn sở hữu LaFerrari nhưng hãng cố tình giữ số lượng sản xuất cực thấp. Điều này phản ánh?", options: ["Chiến lược giữ cung khan hiếm để tăng giá trị", "Cầu giảm", "Cung dư thừa", "Thị trường cân bằng"], answer: "Chiến lược giữ cung khan hiếm để tăng giá trị" },
+     { text: "📘 Vai trò của cung cầu trong nền kinh tế thị trường là gì?", options: ["Xác định giá cả và lượng hàng hóa trên thị trường", "Quyết định chính sách tài khóa", "Quy định tiền lương tối thiểu", "Chỉ tác động đến xuất khẩu"], answer: "Xác định giá cả và lượng hàng hóa trên thị trường" },
+     { text: "📘 Trạng thái cân bằng thị trường là khi nào?", options: ["Lượng cung > lượng cầu", "Lượng cầu > lượng cung", "Lượng cung = lượng cầu", "Giá cả không đổi"], answer: "Lượng cung = lượng cầu" },
+     { text: "📘 Hãng Ferrari tung mẫu siêu xe giới hạn chỉ 100 chiếc trên toàn thế giới. Rất nhiều người muốn mua nhưng không đủ xe. Đây là?", options: ["Cầu cao, cung khan hiếm", "Cung dư thừa", "Cầu giảm", "Thị trường cân bằng"], answer: "Cầu cao, cung khan hiếm" },
+     { text: "📘 Khi cầu lớn hơn cung, thị trường sẽ xảy ra tình trạng:", options: ["Dư thừa hàng hóa", "Thiếu hụt hàng hóa", "Cân bằng", "Giảm giá"], answer: "Thiếu hụt hàng hóa" },
+     { text: "📘 Giá vé fan meeting Quốc Kang tăng nhưng fan vẫn xếp hàng dài để mua. Đây là ví dụ của?", options: ["Cầu cao bất chấp giá", "Cầu giảm mạnh", "Cung giảm", "Thị trường cân bằng"], answer: "Cầu cao bất chấp giá" },
+     { text: "📘 Khi cung lớn hơn cầu, thị trường sẽ xảy ra tình trạng:", options: ["Dư thừa hàng hóa", "Thiếu hụt hàng hóa", "Cân bằng", "Không đổi"], answer: "Dư thừa hàng hóa" },
+     { text: "📘 Khi thị hiếu tiêu dùng thay đổi theo xu hướng mới, yếu tố nào bị tác động trực tiếp?", options: ["Cầu", "Cung", "Cả cung và cầu", "Không cái nào"], answer: "Cầu" },
+     { text: "📘 Khi giá nguyên liệu đầu vào tăng mạnh, yếu tố nào bị tác động trực tiếp?", options: ["Cầu", "Cung", "Cả cung và cầu", "Không cái nào"], answer: "Cung" },
+     { text: "📘 Trên thị trường tự do, giá cả được quyết định chủ yếu bởi:", options: ["Nhà nước", "Người bán", "Người mua", "Quan hệ cung cầu"], answer: "Quan hệ cung cầu" },
+     { text: "✈️ Du lịch quốc tế hồi phục mạnh, hãng hàng không tăng chuyến — vé rẻ trở nên khan hiếm mùa cao điểm.", options: ["Cung giảm","Cầu tăng","Cung tăng","Cầu giảm"], answer: "Cầu tăng" },
+     { text: "📘 Vì sao nói cung cầu là 'bàn tay vô hình' của thị trường?", options: ["Vì nó định hướng sản xuất và tiêu dùng mà không cần mệnh lệnh hành chính", "Vì nó do nhà nước trực tiếp kiểm soát", "Vì nó vô hình thật sự", "Vì nó không tồn tại"], answer: "Vì nó định hướng sản xuất và tiêu dùng mà không cần mệnh lệnh hành chính" }
+    ];
+
+    let currentEvent = {};
+
+    function nextQuestion() {
+      currentEvent = events[Math.floor(Math.random() * events.length)];
+      document.getElementById("question").innerText = currentEvent.text;
+      let optionsDiv = document.getElementById("options");
+      optionsDiv.innerHTML = "";
+      currentEvent.options.forEach(opt => {
+        let btn = document.createElement("button");
+        btn.innerText = opt;
+        btn.onclick = () => checkAnswer(opt);
+        optionsDiv.appendChild(btn);
+      });
+      document.getElementById("feedback").innerText = "";
+    }
+
+    function checkAnswer(choice) {
+      if (choice === currentEvent.answer) {
+        document.getElementById("feedback").innerHTML = "✅ Chính xác! Cô ơi, bạn xứng đáng được 10 điểm ạ 🎉👏";
+        document.getElementById("correctSound").play();
+        confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
+      } else {
+        document.getElementById("feedback").innerHTML = "❌ Sai rồi!";
+        document.getElementById("wrongSound").play();
+      }
+    }
+  </script>
+</body>
+</html>
